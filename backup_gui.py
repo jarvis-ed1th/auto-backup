@@ -11,10 +11,19 @@ import threading
 
 class BackupApp:
     def __init__(self, master):
+
         self.tray_icon = None
         self.master = master
         master.title("Backup Application")
         master.iconbitmap("icon.ico")
+
+        self.background = False
+
+        # Si l'argument "--background" est passé, lancer l'application en arrière-plan
+        if "--background" in sys.argv:
+            self.background = True
+            self.master.withdraw()
+            self.create_tray_icon()
 
         # Variables pour stocker les paramètres
         self.config_folder = os.path.join(os.environ['APPDATA'], 'Auto-Backup')
@@ -96,11 +105,6 @@ class BackupApp:
         # Lier l'événement de fermeture de la fenêtre principale à la méthode hide_app
         self.master.protocol("WM_DELETE_WINDOW", self.hide_app)
 
-        # Si l'argument "--background" est passé, lancer l'application en arrière-plan
-        if "--background" in sys.argv:
-            self.master.withdraw()
-            self.create_tray_icon()
-
     def create_tray_icon(self):
         icon_image = Image.open("icon.ico")
         self.tray_icon = pystray.Icon("name", icon_image, "Auto-Backup", self.create_menu())
@@ -113,16 +117,18 @@ class BackupApp:
         )
 
     def show_app(self, icon, item):
+        self.background = False
         self.master.deiconify()
         self.tray_icon.stop()
 
     def hide_app(self):
+        self.background = True
         self.master.withdraw()
         self.create_tray_icon()
 
     def exit_app(self, icon, item):
         self.tray_icon.stop()
-        sys.exit()
+        os._exit(0)
 
     def browse_destination(self):
         folder_selected = filedialog.askdirectory()
@@ -187,25 +193,25 @@ class BackupApp:
         if self.auto_backup_enabled.get():
             if check_auto_backup(self.frequency.get(), self.destination_folder.get()):
                 self.init_backup("auto-backup")
-            keep_recent_backups(self.destination_folder.get(), self.history.get())
 
     def init_backup(self, backup_name):
-        progress_window = ProgressWindow(self.master)
+        progress_window = ProgressWindow(self.master, self.background)
         backup_thread = threading.Thread(
             target=backup, args=(
                 self.destination_folder.get(), self.source_folders, self.exclusion_folders, backup_name,
-                progress_window,
-                callback))
+                self.history.get(), progress_window, callback))
         backup_thread.start()
 
 
-def callback(progress_window, backup_name):
+def callback(progress_window, backup_name, destination_folder, history):
     progress_window.window.destroy()
-    messagebox.showinfo("Backup Complete", f"{backup_name} completed successfully.")
+    if not progress_window.background:
+        messagebox.showinfo("Backup Complete", f"{backup_name} completed successfully.")
+    keep_recent_backups(destination_folder, history)
 
 
 class ProgressWindow:
-    def __init__(self, parent):
+    def __init__(self, parent, background):
         self.parent = parent
         self.window = tk.Toplevel(parent)
         self.window.title("Sauvegarde en cours")
@@ -214,8 +220,13 @@ class ProgressWindow:
         self.window.grab_set()
         self.window.protocol("WM_DELETE_WINDOW", self.disable_close_button)
 
+        self.background = background
+
         self.progress_label = ttk.Label(self.window, text="Sauvegarde en cours...")
         self.progress_label.pack(pady=10)
+
+        self.cancel_button = ttk.Button(self.window, text="Force stop (not recommended)", command=self.cancel_backup)
+        self.cancel_button.pack(pady=5)
 
         self.progressbar = ttk.Progressbar(self.window, orient="horizontal", length=200, mode="indeterminate")
         self.progressbar.pack(pady=5)
@@ -223,6 +234,10 @@ class ProgressWindow:
 
     def disable_close_button(self):
         pass
+
+    def cancel_backup(self):
+        self.window.destroy()
+        os._exit(0)
 
 
 # Créer et exécuter l'application
