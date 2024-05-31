@@ -1,7 +1,7 @@
 import configparser
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from backup_logic import auto_backup, force_backup
+from backup_logic import auto_backup, backup
 import os
 import sys
 import pystray
@@ -183,11 +183,11 @@ class BackupApp:
 
     def launch_auto_backup(self):
         if self.auto_backup_enabled.get():
-            auto_backup(self.config_folder, self.frequency.get(), self.history.get(), self.source_folders,
-                        self.destination_folder.get(), self.exclusion_folders)
+            auto_backup(self.frequency.get(), self.history.get(), self.destination_folder.get(), self.source_folders,
+                        self.exclusion_folders)
 
     def force_backup(self):
-        force_backup(self.config_folder, self.source_folders, self.destination_folder.get(), self.exclusion_folders)
+        backup(self.destination_folder.get(), self.source_folders, self.exclusion_folders, "backup")
         messagebox.showinfo("Backup Complete", "Force backup completed successfully.")
 
 
