@@ -1,11 +1,12 @@
 import configparser
 import tkinter as tk
-from tkinter import filedialog, messagebox
-from backup_logic import auto_backup, backup
+from tkinter import filedialog, messagebox, ttk
+from backup_logic import backup, check_auto_backup, keep_recent_backups
 import os
 import sys
 import pystray
 from PIL import Image
+import threading
 
 
 class BackupApp:
@@ -57,7 +58,8 @@ class BackupApp:
         self.auto_backup_checkbox = tk.Checkbutton(master, text="Enable Auto Backup", variable=self.auto_backup_enabled)
 
         self.save_settings_button = tk.Button(master, text="Save Settings", command=self.save_settings, width=15)
-        self.force_backup_button = tk.Button(master, text="Force Backup", command=self.force_backup, width=15)
+        self.force_backup_button = tk.Button(master, text="Force Backup", command=lambda: self.init_backup('Backup'),
+                                             width=15)
 
         # Placement des widgets
         self.destination_label.grid(row=0, column=0, sticky="e")
@@ -89,7 +91,7 @@ class BackupApp:
 
         # Charger les paramètres sauvegardés
         self.load_settings()
-        self.launch_auto_backup()
+        self.auto_backup()
 
         # Lier l'événement de fermeture de la fenêtre principale à la méthode hide_app
         self.master.protocol("WM_DELETE_WINDOW", self.hide_app)
@@ -163,7 +165,7 @@ class BackupApp:
         with open(self.config_file, 'w') as configfile:
             self.config.write(configfile)
         messagebox.showinfo("Settings Saved", "Settings saved successfully.")
-        self.launch_auto_backup()
+        self.auto_backup()
 
     def load_settings(self):
         if os.path.exists(self.config_file):
@@ -181,14 +183,46 @@ class BackupApp:
                 self.frequency.set(settings.get("frequency", "daily"))
                 self.auto_backup_enabled.set(settings.get("auto_backup_enabled", "False") == "True")
 
-    def launch_auto_backup(self):
+    def auto_backup(self):
         if self.auto_backup_enabled.get():
-            auto_backup(self.frequency.get(), self.history.get(), self.destination_folder.get(), self.source_folders,
-                        self.exclusion_folders)
+            if check_auto_backup(self.frequency.get(), self.destination_folder.get()):
+                self.init_backup("auto-backup")
+            keep_recent_backups(self.destination_folder.get(), self.history.get())
 
-    def force_backup(self):
-        backup(self.destination_folder.get(), self.source_folders, self.exclusion_folders, "backup")
-        messagebox.showinfo("Backup Complete", "Force backup completed successfully.")
+    def init_backup(self, backup_name):
+        progress_window = ProgressWindow(self.master)
+        backup_thread = threading.Thread(
+            target=backup, args=(
+                self.destination_folder.get(), self.source_folders, self.exclusion_folders, backup_name,
+                progress_window,
+                callback))
+        backup_thread.start()
+
+
+def callback(progress_window, backup_name):
+    progress_window.window.destroy()
+    messagebox.showinfo("Backup Complete", f"{backup_name} completed successfully.")
+
+
+class ProgressWindow:
+    def __init__(self, parent):
+        self.parent = parent
+        self.window = tk.Toplevel(parent)
+        self.window.title("Sauvegarde en cours")
+        self.window.geometry("300x100")
+        self.window.transient(parent)
+        self.window.grab_set()
+        self.window.protocol("WM_DELETE_WINDOW", self.disable_close_button)
+
+        self.progress_label = ttk.Label(self.window, text="Sauvegarde en cours...")
+        self.progress_label.pack(pady=10)
+
+        self.progressbar = ttk.Progressbar(self.window, orient="horizontal", length=200, mode="indeterminate")
+        self.progressbar.pack(pady=5)
+        self.progressbar.start()
+
+    def disable_close_button(self):
+        pass
 
 
 # Créer et exécuter l'application

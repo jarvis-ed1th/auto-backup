@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import subprocess
 
 
-def backup(destination_folder, source_folders, excluded_folders, backup_name):
+def backup(destination_folder, source_folders, excluded_folders, backup_name, progress_window, callback):
     # Définition de la date pour la sauvegarde
     backup_date = datetime.now().strftime('%Y-%m-%d')
     backup_destination = os.path.join(destination_folder, f"{backup_date}-{backup_name}")
@@ -24,6 +24,9 @@ def backup(destination_folder, source_folders, excluded_folders, backup_name):
         command = (f'robocopy "{folder.replace("/", "\\")}" "{target.replace("/", "\\")}" '
                    f'/E /COPY:DAT /XD {exclude_str} /R:0 /W:0')
         subprocess.run(command)
+
+    if progress_window:
+        callback(progress_window, backup_name)
 
 
 def check_auto_backup(backup_frequency, destination_folder):
@@ -48,12 +51,6 @@ def check_auto_backup(backup_frequency, destination_folder):
             if folder_date > cutoff_date_str:
                 return False
     return True
-
-
-def auto_backup(backup_frequency, backup_history, destination_folder, source_folders, excluded_folders):
-    if check_auto_backup(backup_frequency, destination_folder):
-        backup(destination_folder, source_folders, excluded_folders, "auto-backup")
-    keep_recent_backups(destination_folder, backup_history)
 
 
 def keep_recent_backups(destination_folder, backup_history):
