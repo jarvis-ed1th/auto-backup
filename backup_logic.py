@@ -22,7 +22,7 @@ def backup(destination_folder, source_folders, excluded_folders, backup_name, hi
 
         command = (f'robocopy "{folder.replace("/", "\\")}" "{target.replace("/", "\\")}" '
                    f'/E /COPY:DAT /XD {exclude_str} /R:0 /W:0')
-        subprocess.run(command)
+        subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
 
     callback(progress_window, backup_name, destination_folder, history)
 

@@ -15,7 +15,7 @@ class BackupApp:
         self.tray_icon = None
         self.master = master
         master.title("Backup Application")
-        master.iconbitmap("icon.ico")
+        master.iconbitmap("icon_s.ico")
 
         self.background = False
 
@@ -102,11 +102,8 @@ class BackupApp:
         self.load_settings()
         self.auto_backup()
 
-        # Lier l'événement de fermeture de la fenêtre principale à la méthode hide_app
-        self.master.protocol("WM_DELETE_WINDOW", self.hide_app)
-
     def create_tray_icon(self):
-        icon_image = Image.open("icon.ico")
+        icon_image = Image.open("icon_s.ico")
         self.tray_icon = pystray.Icon("name", icon_image, "Auto-Backup", self.create_menu())
         self.tray_icon.run_detached()
 
@@ -116,18 +113,14 @@ class BackupApp:
             pystray.MenuItem("Exit", self.exit_app)
         )
 
-    def show_app(self, icon, item):
+    def show_app(self):
         self.background = False
         self.master.deiconify()
         self.tray_icon.stop()
 
-    def hide_app(self):
-        self.background = True
-        self.master.withdraw()
-        self.create_tray_icon()
-
-    def exit_app(self, icon, item):
+    def exit_app(self):
         self.tray_icon.stop()
+        self.master.quit()
         os._exit(0)
 
     def browse_destination(self):
