@@ -22,7 +22,7 @@ ChangesAssociations=yes
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputBaseFilename=mysetup
+OutputBaseFilename={#MyAppName}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -34,8 +34,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\hourl\Desktop\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\hourl\Desktop\icon.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\hourl\Documents\PROJECTS\autoBackup\dist\backup_gui.exe"; DestDir: "{app}";DestName: "{#MyAppExeName}"; Flags: ignoreversion
+Source: "C:\Users\hourl\Documents\PROJECTS\autoBackup\dist\icon_s.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

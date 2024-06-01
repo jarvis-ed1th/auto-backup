@@ -15,7 +15,12 @@ class BackupApp:
         self.tray_icon = None
         self.master = master
         master.title("Backup Application")
-        master.iconbitmap("icon_s.ico")
+        if hasattr(sys, '_MEIPASS'):
+            app_path = sys._MEIPASS
+        else:
+            app_path = os.path.dirname(os.path.abspath(__file__))
+        self.icon_path = os.path.join(app_path, "icon_s.ico")
+        master.iconbitmap(self.icon_path)
 
         self.background = False
 
@@ -103,7 +108,7 @@ class BackupApp:
         self.auto_backup()
 
     def create_tray_icon(self):
-        icon_image = Image.open("icon_s.ico")
+        icon_image = Image.open(self.icon_path)
         self.tray_icon = pystray.Icon("name", icon_image, "Auto-Backup", self.create_menu())
         self.tray_icon.run_detached()
 
