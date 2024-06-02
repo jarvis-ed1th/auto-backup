@@ -1,10 +1,10 @@
 import os
-from datetime import datetime, timedelta
 import subprocess
+from datetime import datetime, timedelta
 
 
 def backup(destination_folder, source_folders, excluded_folders, backup_name, history, progress_window, callback):
-    # Définition de la date pour la sauvegarde
+    # Création du chemin d'accès du dossier avec la date de la sauvegarde
     backup_date = datetime.now().strftime('%Y-%m-%d')
     backup_destination = os.path.join(destination_folder, f"{backup_date}-{backup_name}")
 
@@ -24,6 +24,7 @@ def backup(destination_folder, source_folders, excluded_folders, backup_name, hi
                    f'/E /COPY:DAT /XD {exclude_str} /R:0 /W:0')
         subprocess.run(command, creationflags=subprocess.CREATE_NO_WINDOW)
 
+    # Call de la fonction qui termine la sauvegarde
     callback(progress_window, backup_name, destination_folder, history)
 
 
@@ -68,8 +69,6 @@ def keep_recent_backups(destination_folder, backup_history):
 
 
 def delete_old_folders(folder_to_delete):
-    # Créer le contenu du fichier batch
+    # Contenu de la commande et exécution
     batch_content = f'rd /s /q "{folder_to_delete.replace('/', '\\')}"'
-
-    # Chemin du fichier batch
     subprocess.run(batch_content, shell=True)

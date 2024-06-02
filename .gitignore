@@ -1,4 +1,5 @@
 .idea/
 build/
 dist/
+Output/
 backup_gui.spec
